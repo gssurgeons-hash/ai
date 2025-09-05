@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>D_C_H</title>
+  <link rel="icon" type="image/png" href="CODING.png">
+  <meta name="description" content="All tools with voice input (STT) and voice output (TTS)." />
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B4YKD6M5GK"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B4YKD6M5GK');
+
+</script>
+  <style>
+    :root{
+      --bg:#071024;--panel:#071827;--card:#0b1220;--muted:#94a3b8;--accent:#7c3aed;--glass:rgba(255,255,255,0.03);
+      --bg-img:url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1920&auto=format&fit=crop');
+      --bg-blur: 0px; --bg-darken: 0.45;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:#000;color:#e6eef8}
+    body{position:relative;background: linear-gradient(180deg,var(--bg),#021224);overflow-x:hidden}
+    body::before{content:"";position:fixed;inset:0;z-index:-2;background: linear-gradient(180deg,var(--bg),#021224), var(--bg-img) center/cover no-repeat fixed;filter: blur(var(--bg-blur));transform: translateZ(0);} 
+    body::after{content:"";position:fixed;inset:0;z-index:-1;background: rgba(2,6,23,var(--bg-darken));}
+
+    /* Layout */
+    .app{display:flex;min-height:100vh;transition:all .25s ease}
+    .sidebar{width:280px;background:linear-gradient(180deg,rgba(6,20,36,0.85),rgba(4,23,40,0.85));backdrop-filter:saturate(120%) blur(6px);padding:20px;display:flex;flex-direction:column;gap:14px;border-right:1px solid rgba(255,255,255,0.05);min-height:100vh;position:relative;z-index:40}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#222e42);display:flex;align-items:center;justify-content:center;font-weight:700}
+    h1{font-size:16px;margin:0}
+    .muted{color:var(--muted);font-size:13px}
+    .menu{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+    .menu button{background:transparent;border:none;color:inherit;text-align:left;padding:10px;border-radius:8px;cursor:pointer;font-size:15px}
+    .menu button:hover{background:rgba(255,255,255,0.06)}
+    .menu button.active{background:linear-gradient(90deg,var(--accent),#4f46e5);box-shadow:0 6px 20px rgba(12,8,30,0.6)}
+    .footer-small{margin-top:auto;font-size:12px;color:var(--muted)}
+
+    /* Background chooser thumbnails */
+    .bg-chooser{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+    .thumb{position:relative;border-radius:10px;overflow:hidden;cursor:pointer;border:1px solid rgba(255,255,255,0.08)}
+    .thumb img{width:100%;height:64px;object-fit:cover;display:block}
+    .thumb.active{outline:2px solid #a78bfa; box-shadow:0 0 0 3px rgba(124,58,237,0.35)}
+    .thumb .tag{position:absolute;bottom:6px;left:6px;font-size:10px;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:999px}
+
+    main{flex:1;padding:22px;overflow:auto;min-height:100vh}
+    header.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;position:relative;z-index:10}
+    .search-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03));padding:16px;border-radius:14px;box-shadow:0 10px 28px rgba(2,6,23,0.6);margin-bottom:14px;border:1px solid rgba(255,255,255,0.06)}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+    textarea,input[type=text],select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(2,6,23,0.3);color:inherit;resize:vertical}
+    input[type=file]{color:var(--muted)}
+    button.btn{background:var(--accent);border:none;padding:10px 14px;border-radius:10px;color:white;font-weight:600;cursor:pointer}
+    .result{white-space:pre-wrap;padding:12px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.07),transparent);border:1px dashed rgba(255,255,255,0.14);min-height:80px;margin-top:8px}
+
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .chip{background:var(--glass);padding:8px 10px;border-radius:999px;font-size:13px}
+    .kbd{background:#061424;padding:6px 8px;border-radius:6px;font-size:13px}
+
+    /* Voice UI */
+    .voice-wrap{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
+    .icon-btn{border:1px solid rgba(255,255,255,0.15);background:rgba(2,6,23,0.3);color:#e6eef8;border-radius:10px;padding:8px 10px;cursor:pointer}
+    .icon-btn[aria-pressed="true"]{outline:2px solid #22c55e;box-shadow:0 0 0 3px rgba(34,197,94,0.25)}
+    .saying{animation:pulse 1.2s infinite}
+    .speaking{outline:2px solid #38bdf8;box-shadow:0 0 0 3px rgba(56,189,248,0.25)}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+
+    footer{padding:10px;text-align:center;color:var(--muted);font-size:13px}
+
+    /* ---------- Responsive & Mobile Sidebar ---------- */
+    /* Menu toggle button (hidden on desktop) */
+    .menu-toggle{
+      display:none;
+      background:transparent;border:none;color:inherit;font-size:22px;padding:8px;border-radius:8px;cursor:pointer;
+    }
+    /* Mobile specific */
+    @media (max-width:980px){
+      .sidebar{
+        position:fixed;
+        left:0;
+        top:0;
+        bottom:0;
+        transform:translateX(-110%);
+        transition:transform .28s ease;
+        width:78%;
+        max-width:340px;
+        z-index:60;
+        box-shadow: 8px 0 30px rgba(0,0,0,0.6);
+      }
+      .sidebar.open{ transform:translateX(0); }
+      .app.dim::after{
+        content:"";position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:50;
+      }
+      .menu-toggle{ display:inline-flex; align-items:center; justify-content:center; gap:6px; background:linear-gradient(90deg,var(--accent),#4f46e5); color:white; padding:8px 10px; border-radius:10px; box-shadow:0 6px 18px rgba(12,8,30,0.5); }
+      main{ padding:16px; }
+      header.top{ gap:6px; align-items:center; }
+      .sidebar .footer-small{display:none}
+    }
+
+    /* Improve form spacing on small screens */
+    @media (max-width:520px){
+      .card{padding:12px;border-radius:10px}
+      body{font-size:15px}
+      .logo{width:40px;height:40px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="appRoot">
+    <aside class="sidebar" id="appSidebar">
+      <div class="brand">
+        <div class="logo">AI</div>
+        <div>
+          <h1>All-in-One AI</h1>
+          <div class="muted">Voice (🎤→🔤, 🔊→🗣) Able</div>
+        </div>
+      </div>
+
+      <div class="menu" role="navigation">
+        <button data-tool="text" class="active">✍️ Text</button>
+        <button data-tool="coding">💻 Coding</button>
+        <button data-tool="study">📘 Study</button>
+        <button data-tool="image">🎨 Image</button>
+        <button data-tool="productivity">📂 Productivity</button>
+        <button data-tool="chat">🤖 Chat</button>
+        <button data-tool="translate">🌐 Translate</button>
+        <button data-tool="quiz">🧮 Math Quiz</button>
+        <button data-tool="fun">🎉 Fun</button>
+        <button data-tool="history">📜 History</button>
+      </div>
+
+      <div class="footer-small">Demo: Using client-side keys (proxy server in production)</div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button id="open-login" class="btn" style="background:#f97316">Login</button>
+        <button id="download-zip" class="btn" style="background:#0ea5a4">Download HTML</button>
+      </div>
+
+      <!-- Background chooser (rendered by JS) -->
+      <div style="margin-top:12px">
+        <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px">Backgrounds</label>
+        <div id="bg-chooser" class="bg-chooser" aria-hidden="false"></div>
+      </div>
+
+    </aside>
+
+    <main>
+      <header class="top">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button id="menu-toggle" class="menu-toggle" aria-label="Open menu">☰</button>
+          <div>
+            <h2 id="tool-title">✍️ Text Tools</h2>
+            <div class="muted">Mic (STT) and voice readout (TTS) enabled on all devices.</div>
+          </div>
+        </div>
+        <div class="search-row">
+          <div class="kbd">Key: <span id="key-status">Embedded (demo)</span></div>
+          <label class="chip"><input id="auto-speak" type="checkbox"> auto-speak</label>
+          <select id="tts-voice" class="icon-btn" title="TTS Voice"></select>
+          <input id="tts-rate" type="range" min="0.5" max="1.8" step="0.1" value="1" title="Voice rate">
+        </div>
+      </header>
+
+      <section id="tool-area"></section>
+      <footer>Made with 🥇 — Voice ready</footer>
+    </main>
+  </div>
+
+  <!-- Simple Login modal -->
+  <div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.7);z-index:9999;align-items:center;justify-content:center;">
+    <div style="width:420px;max-width:94vw;background:linear-gradient(180deg,#071827,#0b1220);padding:20px;border-radius:12px;box-shadow:0 20px 60px rgba(2,6,23,0.7);color:#e6eef8;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="margin:0">Sign in</h3>
+        <button id="close-login" style="background:transparent;border:none;color:#94a3b8;font-size:18px;cursor:pointer">✕</button>
+      </div>
+      <p class="muted" style="margin:6px 0 12px">Sign in with Google or email/password (demo).</p>
+      <div style="display:flex;gap:8px;flex-direction:column">
+        <button id="btn-google" class="btn">Continue from Google</button>
+        <div style="display:flex;gap:10px;align-items:center;margin:6px 0;color:var(--muted)">
+          <hr style="flex:1;border:none;border-top:1px solid rgba(255,255,255,0.06)" />
+          <div style="font-size:12px">Or</div>
+          <hr style="flex:1;border:none;border-top:1px solid rgba(255,255,255,0.06)" />
+        </div>
+        <input id="gh-email" type="text" placeholder="Email" />
+        <input id="gh-pass" type="password" placeholder="Password" />
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="btn-ghatak" class="btn" style="flex:1">Sign in</button>
+          <button id="btn-guest" class="btn" style="background:#334155">Guest</button>
+        </div>
+        <label style="margin-top:10px;font-size:13px;color:var(--muted)"><input id="remember-me" type="checkbox" /> Remember me</label>
+        <div id="login-msg" style="margin-top:10px;color:#f8caca"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- EMBEDDED KEY (DEMO) ----
+    // आपकी दी हुई key नीचे embed कर दी गई है (केवल लोकल/डेमो के लिए)
+    const OPENAI_KEY_EMBEDDED = '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';
+    // WARNING: हार्ड-कोडेड keys असुरक्षित हैं। प्रोडक्शन में यह न रखें.
+
+    // ---------- Utilities ----------
+    const toolArea = document.getElementById('tool-area');
+    const toolTitle = document.getElementById('tool-title');
+    const appRoot = document.getElementById('appRoot');
+    const sidebar = document.getElementById('appSidebar');
+    const menuToggle = document.getElementById('menu-toggle');
+
+    // Sidebar mobile toggle
+    function openSidebar(){ sidebar.classList.add('open'); appRoot.classList.add('dim'); }
+    function closeSidebar(){ sidebar.classList.remove('open'); appRoot.classList.remove('dim'); }
+    function toggleSidebar(){ if(sidebar.classList.contains('open')) closeSidebar(); else openSidebar(); }
+    menuToggle.addEventListener('click', toggleSidebar);
+
+    // Close sidebar on outside click (mobile)
+    document.addEventListener('click', (e)=>{
+      if(window.innerWidth <= 980 && sidebar.classList.contains('open')){
+        if(!sidebar.contains(e.target) && !menuToggle.contains(e.target)){
+          closeSidebar();
+        }
+      }
+    });
+
+    // Hook into existing menu buttons to close on mobile after selection
+    // (these menu buttons are added early below — we'll also attach extra listeners after initial creation)
+    // ---------- Utilities: History ----------
+    function saveToHistory(prompt, output, toolName) {
+      const history = JSON.parse(localStorage.getItem('aiHistory') || '[]');
+      history.unshift({ prompt, output, tool: toolName, timestamp: new Date().toLocaleString() });
+      localStorage.setItem('aiHistory', JSON.stringify(history.slice(0, 50)));
+      window._lastOutput = output;
+      if(document.getElementById('auto-speak')?.checked){ speak(output); }
+    }
+
+    // ---------- Voice (STT + TTS) ----------
+    const voiceState = { recognizer:null, listening:false, selectedVoice:null };
+
+    function initTTSVoices(){
+      const sel = document.getElementById('tts-voice');
+      function fill(){
+        const voices = speechSynthesis.getVoices();
+        sel.innerHTML = '';
+        voices.forEach((v,i)=>{
+          const opt = document.createElement('option');
+          opt.value = v.name; opt.textContent = `${v.name} (${v.lang})`;
+          if(v.lang.startsWith('hi') || v.lang.startsWith('en-IN')) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        voiceState.selectedVoice = voices.find(v=>v.name===sel.value) || null;
+      }
+      if('speechSynthesis' in window && sel){
+        speechSynthesis.onvoiceschanged = fill; fill();
+        sel.addEventListener('change', ()=>{ voiceState.selectedVoice = speechSynthesis.getVoices().find(v=>v.name===sel.value) || null; });
+      }
+    }
+
+    function speak(text){
+      if(!('speechSynthesis' in window)) { alert('TTS supported नहीं है'); return; }
+      if(!text) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = (voiceState.selectedVoice?.lang) || 'hi-IN';
+      u.voice = voiceState.selectedVoice || null;
+      const rateEl = document.getElementById('tts-rate');
+      u.rate = rateEl ? parseFloat(rateEl.value) : 1;
+      window._speaking = true;
+      u.onend = ()=>{ window._speaking = false; document.querySelectorAll('.speaking').forEach(el=>el.classList.remove('speaking')); };
+      speechSynthesis.speak(u);
+    }
+    function stopSpeak(){ if('speechSynthesis' in window) speechSynthesis.cancel(); }
+
+    function createMicButton(targetInput){
+      const btn = document.createElement('button');
+      btn.className = 'icon-btn'; btn.type = 'button'; btn.id = 'mic-' + Math.random().toString(36).slice(2);
+      btn.innerHTML = '🎤 speak';
+      btn.title = 'write by voice';
+      btn.addEventListener('click', ()=> startDictation(btn, targetInput));
+      return btn;
+    }
+    function createSpeakButton(getText){
+      const btn = document.createElement('button');
+      btn.className = 'icon-btn'; btn.type = 'button'; btn.innerHTML = '🔊 recite'; btn.title='read aloud';
+      btn.addEventListener('click', ()=> speak(getText()));
+      return btn;
+    }
+
+    function getRecognizer(){
+      if(voiceState.recognizer) return voiceState.recognizer;
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if(!SR){ /* not supported */ return null; }
+      const r = new SR(); r.lang = 'hi-IN'; r.continuous = false; r.interimResults = false;
+      r.onresult = (e)=>{
+        const txt = e.results?.[0]?.[0]?.transcript || '';
+        if(voiceState.currentTarget){ voiceState.currentTarget.value = (voiceState.currentTarget.value + ' ' + txt).trim(); voiceState.currentTarget.dispatchEvent(new Event('input')); }
+        voiceState.listening = false; toggleBtnPressed(voiceState.currentBtn,false);
+      };
+      r.onerror = ()=>{ voiceState.listening = false; toggleBtnPressed(voiceState.currentBtn,false); };
+      r.onend = ()=>{ voiceState.listening = false; toggleBtnPressed(voiceState.currentBtn,false); };
+      voiceState.recognizer = r; return r;
+    }
+    function toggleBtnPressed(btn, state){ if(!btn) return; btn.setAttribute('aria-pressed', state? 'true':'false'); btn.classList.toggle('saying', !!state); }
+
+    function startDictation(btn, inputEl){
+      const r = getRecognizer(); if(!r){ alert('Speech Recognition supported नहीं है'); return; }
+      if(voiceState.listening){ r.stop(); voiceState.listening=false; toggleBtnPressed(btn,false); return; }
+      voiceState.currentTarget = inputEl; voiceState.currentBtn = btn;
+      voiceState.listening = true; toggleBtnPressed(btn,true); r.start();
+    }
+
+    function enhanceVoiceUI(root = toolArea){
+      // Attach mic buttons next to all inputs & textareas inside root
+      root.querySelectorAll('textarea, input[type="text"]').forEach(inp=>{
+        if(inp.closest('.voice-wrap-added')) return;
+        const wrap = document.createElement('div'); wrap.className = 'voice-wrap voice-wrap-added';
+        inp.insertAdjacentElement('afterend', wrap);
+        const micBtn = createMicButton(inp); wrap.appendChild(micBtn);
+      });
+      // Add speak buttons for any .result containers
+      root.querySelectorAll('.card').forEach(card=>{
+        const res = card.querySelector('.result');
+        if(res && !card.querySelector('[data-tts]')){
+          const ctr = document.createElement('div'); ctr.className='voice-wrap'; ctr.style.marginTop='6px';
+          const sp = createSpeakButton(()=> res.textContent || ''); sp.setAttribute('data-tts','');
+          ctr.appendChild(sp); card.appendChild(ctr);
+        }
+      });
+    }
+
+    // ---------- OpenAI calls (use embedded key first, then localStorage fallback) ----------
+    async function callOpenAIChat(messages, model='gpt-4o-mini', max_tokens=600, temperature=0.7, toolName='Unknown Tool'){
+      const key = OPENAI_KEY_EMBEDDED || localStorage.getItem('OPENAI_KEY_DEMO');
+      if(!key) throw new Error('No API key. Please set OPENAI_KEY_EMBEDDED or localStorage key.');
+      const body = {model, messages, max_tokens, temperature};
+      const resp = await fetch('https://api.openai.com/v1/chat/completions',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key}, body:JSON.stringify(body) });
+      if(!resp.ok){ const txt = await resp.text(); throw new Error(txt || 'API error'); }
+      const j = await resp.json();
+      const output = j.choices?.[0]?.message?.content || JSON.stringify(j);
+      saveToHistory(messages[0].content, output, toolName);
+      return output;
+    }
+    async function callOpenAIImage(prompt, size='512x512', toolName='Image Generator'){
+      const key = OPENAI_KEY_EMBEDDED || localStorage.getItem('OPENAI_KEY_DEMO'); if(!key) throw new Error('No API key.');
+      const resp = await fetch('https://api.openai.com/v1/images/generations',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key}, body: JSON.stringify({prompt, n:1, size}) });
+      if(!resp.ok){ const t = await resp.text(); throw new Error(t); }
+      const j = await resp.json(); const url = j.data?.[0]?.url || (j.data?.[0]?.b64_json ? 'data:image/png;base64,'+j.data[0].b64_json : null);
+      if(!url) throw new Error('No image returned');
+      saveToHistory(prompt, `Image URL: ${url}`, toolName);
+      return url;
+    }
+
+    // ---------- Tools ----------
+    function loadTool(tool){
+      switch(tool){
+        case 'text': return loadTextTools();
+        case 'coding': return loadCodingTools();
+        case 'study': return loadStudyTools();
+        case 'image': return loadImageTools();
+        case 'productivity': return loadProductivityTools();
+        case 'chat': return loadChatTools();
+        case 'translate': return loadTranslateTools();
+        case 'quiz': return loadQuizTools();
+        case 'fun': return loadFunTools();
+        case 'history': return loadHistoryTools();
+      }
+    }
+
+    function loadTextTools(){
+      toolTitle.textContent = '✍️ Text Tools';
+      toolArea.innerHTML = `
+        <div class="grid">
+          <div class="card"><h3>Text Generator</h3><label>prompt</label><textarea id="txt-prompt" rows="4" placeholder="topic or direction..."></textarea><div class="row" style="margin-top:8px"><input id="txt-temp" type="text" value="0.7" style="width:120px" /><button id="gen-text" class="btn">Generate</button></div><div id="txt-result" class="result"></div></div>
+          <div class="card"><h3>Summarizer</h3><label>long text</label><textarea id="sum-input" rows="6" placeholder="paste text..."></textarea><div class="row" style="margin-top:8px"><select id="sum-length"><option value="short">Short</option><option value="medium" selected>Medium</option><option value="long">Long</option></select><button id="summarize" class="btn">Summarize</button></div><div id="sum-result" class="result"></div></div>
+          <div class="card"><h3>Email Writer</h3><label>Points/Details</label><textarea id="email-input" rows="4" placeholder="Job, Receiver, Tone..."></textarea><button id="write-email" class="btn">Write Email</button><div id="email-result" class="result"></div></div>
+          <div class="card"><h3>Paraphraser</h3><label>text</label><textarea id="para-input" rows="4"></textarea><button id="para-btn" class="btn">Paraphrase</button><div id="para-result" class="result"></div></div>
+          <div class="card"><h3>Ad Copy</h3><label>Product Description</label><textarea id="ad-input" rows="3"></textarea><button id="ad-btn" class="btn">Generate Ad Copy</button><div id="ad-result" class="result"></div></div>
+          <div class="card"><h3>Copy / Use</h3><button id="copy-output" class="btn">Copy last output</button><div class="muted" style="margin-top:8px">Tip: Select any output and click Copy.</div></div>
+        </div>`;
+      // handlers
+      document.getElementById('gen-text').addEventListener('click', async ()=>{ const p = document.getElementById('txt-prompt').value.trim(); if(!p){alert('Enter the prompt');return} const t = parseFloat(document.getElementById('txt-temp').value)||0.7; const outEl = document.getElementById('txt-result'); outEl.textContent='Generating...'; try{ const r = await callOpenAIChat([{role:'user',content:p}], 'gpt-4o-mini', 700, t, 'Text Generator'); outEl.textContent = r; }catch(e){outEl.textContent='Error: '+e.message} });
+      document.getElementById('summarize').addEventListener('click', async ()=>{ const txt = document.getElementById('sum-input').value.trim(); if(!txt){alert('enter text');return} const len = document.getElementById('sum-length').value; const outEl = document.getElementById('sum-result'); outEl.textContent='Summarizing...'; try{ const prompt = `Summarize the following text in ${len} length in Hindi:\n\n${txt}`; const r = await callOpenAIChat([{role:'user',content:prompt}], 'gpt-4o-mini', 400, 0.3, 'Summarizer'); outEl.textContent = r; }catch(e){outEl.textContent='Error: '+e.message} });
+      document.getElementById('write-email').addEventListener('click', async ()=>{ const pts = document.getElementById('email-input').value.trim(); if(!pts){alert('Enter details');return} const outEl = document.getElementById('email-result'); outEl.textContent='Writing...'; try{ const prompt = `Write a professional email in Hindi using these points:\n${pts}`; const r = await callOpenAIChat([{role:'user',content:prompt}], 'gpt-4o-mini', 400, 0.5, 'Email Writer'); outEl.textContent = r; }catch(e){outEl.textContent='Error: '+e.message} });
+      document.getElementById('para-btn').addEventListener('click', async ()=>{ const txt = document.getElementById('para-input').value.trim(); if(!txt){alert('enter text');return} const outEl = document.getElementById('para-result'); outEl.textContent='Processing...'; try{ const prompt = `Paraphrase the following text in Hindi, keep meaning same but change wording:\n\n${txt}`; const r = await callOpenAIChat([{role:'user',content:prompt}], 'gpt-4o-mini', 400, 0.7, 'Paraphraser'); outEl.textContent = r; }catch(e){outEl.textContent='Error: '+e.message} });
+      document.getElementById('ad-btn').addEventListener('click', async ()=>{ const txt = document.getElementById('ad-input').value.trim(); if(!txt){alert('Enter details');return} const outEl = document.getElementById('ad-result'); outEl.textContent='Generating...'; try{ const prompt = `Create 3 short ad copies in Hindi for this product/service: ${txt}`; const r = await callOpenAIChat([{role:'user',content:prompt}], 'gpt-4o-mini', 300, 0.9, 'Ad Copy Generator'); outEl.textContent = r; }catch(e){outEl.textContent='Error: '+e.message} });
+      document.getElementById('copy-output').addEventListener('click', ()=>{ if(window._lastOutput) navigator.clipboard.writeText(window._lastOutput).then(()=>alert('copied')); else alert('no output yet'); });
+      enhanceVoiceUI();
+      // Close sidebar on mobile after clicking a tool-action
+      document.querySelectorAll('.card button').forEach(b => b.addEventListener('click', ()=>{ if(window.innerWidth <= 980) closeSidebar(); }));
+    }
+
+    function loadCodingTools(){
+      toolTitle.textContent = '💻 Coding Tools';
+      toolArea.innerHTML = `
+        <div class="grid">
+          <div class="card"><h3>Code Generator</h3><label>What to build (language, features)</label><textarea id="code-desc" rows="5"></textarea><button id="gen-code" class="btn">Generate Code</button><div id="code-result" class="result"></div></div>
+          <div class="card"><h3>Bug Fixer</h3><label>problem code</label><textarea id="bug-code" rows="6"></textarea><button id="fix-code" class="btn">Fix Code</button><div id="fix-result" class="result"></div></div>
+          <div class="card"><h3>Code Explainer</h3><label>code</label><textarea id="explain-code" rows="6"></textarea><button id="explain-btn" class="btn">Explain</button><div id="explain-result" class="result"></div></div>
+        </div>`;
+      document.getElementById('gen-code').addEventListener('click', async ()=>{ const d = document.getElementById('code-desc').value.trim(); if(!d){alert('give details');return} const out = document.getElementById('code-result'); out.textContent='Generating...'; try{ const prompt = `Generate complete code for the following requirement. Provide only code blocks and brief comments. Requirement: ${d}`; const r = await callOpenAIChat([{role:'user',content:prompt}], 'gpt-4o-mini', 1000, 0.2, 'Code Generator'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message} });
+      document.getElementById('fix-code').addEventListener('click', async ()=>{ const c = document.getElementById('bug-code').value.trim(); if(!c){alert('paste the code');return} const out = document.getElementById('fix-result'); out.textContent='Fixing...'; try{ const prompt = `Find and fix bugs in this code. Explain changes and provide fixed code:\n\n${c}`; const r = await callOpenAIChat([{role:'user',content:prompt}], 'gpt-4o-mini', 800, 0.2, 'Bug Fixer'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message} });
+      document.getElementById('explain-btn').addEventListener('click', async ()=>{ const c = document.getElementById('explain-code').value.trim(); if(!c){alert('paste the code');return} const out = document.getElementById('explain-result'); out.textContent='Explaining...'; try{ const prompt = `Explain this code in simple Hindi and add comments line-by-line:\n\n${c}`; const r = await callOpenAIChat([{role:'user',content:prompt}], 'gpt-4o-mini', 600, 0.3, 'Code Explainer'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message} });
+      enhanceVoiceUI();
+    }
+
+    function loadStudyTools(){
+      toolTitle.textContent = '📘 Study Tools';
+      toolArea.innerHTML = `
+        <div class="grid">
+          <div class="card"><h3>Homework Solver</h3><textarea id="hw-text" rows="5" placeholder="Question..."></textarea><button id="solve-hw" class="btn">Solve</button><div id="hw-res" class="result"></div></div>
+          <div class="card"><h3>Math Solver</h3><textarea id="math-text" rows="3" placeholder="Problem..."></textarea><button id="solve-math" class="btn">Solve Math</button><div id="math-res" class="result"></div></div>
+          <div class="card"><h3>Flashcards Generator</h3><textarea id="notes" rows="4" placeholder="paste notes..."></textarea><button id="gen-cards" class="btn">Generate Flashcards</button><div id="cards-res" class="result"></div></div>
+        </div>`;
+      document.getElementById('solve-hw').addEventListener('click', async ()=>{ const q = document.getElementById('hw-text').value.trim(); if(!q){alert('प्रश्न लिखें');return} const out = document.getElementById('hw-res'); out.textContent='Solving...'; try{ const r = await callOpenAIChat([{role:'user',content:`Solve this question step-by-step in Hindi: ${q}`}], 'gpt-4o-mini', 600, 0.2, 'Homework Solver'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message} });
+      document.getElementById('solve-math').addEventListener('click', async ()=>{ const q = document.getElementById('math-text').value.trim(); if(!q){alert('समस्या लिखें');return} const out = document.getElementById('math-res'); out.textContent='Solving...'; try{ const r = await callOpenAIChat([{role:'user',content:`Solve step-by-step: ${q}`}], 'gpt-4o-mini', 500, 0.1, 'Math Solver'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message} });
+      document.getElementById('gen-cards').addEventListener('click', async ()=>{ const n = document.getElementById('notes').value.trim(); if(!n){alert('नोट्स दें');return} const out = document.getElementById('cards-res'); out.textContent='Generating...'; try{ const r = await callOpenAIChat([{role:'user',content:`Create flashcards (Q & A) from these notes in Hindi:\n\n${n}`}], 'gpt-4o-mini', 500, 0.3, 'Flashcards Generator'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message} });
+      enhanceVoiceUI();
+    }
+
+    function loadImageTools(){
+      toolTitle.textContent = '🎨 Image Tools';
+      toolArea.innerHTML = `
+        <div class="grid">
+          <div class="card"><h3>Image Generator</h3><label>Image Description</label><input id="img-prompt" type="text" placeholder="Ex: Sunrise over Himalayan village" /><div class="row" style="margin-top:8px"><select id="img-size"><option>512x512</option><option>1024x1024</option></select><button id="gen-img" class="btn">Generate Image</button></div><div id="img-res" class="result"></div></div>
+          <div class="card"><h3>Logo Maker</h3><label>Brand Description</label><textarea id="logo-desc" rows="3"></textarea><button id="gen-logo" class="btn">Generate Logo Idea</button><div id="logo-res" class="result"></div></div>
+        </div>`;
+      document.getElementById('gen-img').addEventListener('click', async ()=>{ const p = document.getElementById('img-prompt').value.trim(); if(!p){alert('write description');return} const out = document.getElementById('img-res'); out.textContent='Generating image...'; try{ const url = await callOpenAIImage(p, document.getElementById('img-size').value, 'Image Generator'); out.innerHTML = `<img src="${url}" style="max-width:320px;border-radius:8px" />`; }catch(e){out.textContent='Error: '+e.message} });
+      document.getElementById('gen-logo').addEventListener('click', async ()=>{ const d = document.getElementById('logo-desc').value.trim(); if(!d){alert('Enter details');return} const out = document.getElementById('logo-res'); out.textContent='Generating...'; try{ const r = await callOpenAIChat([{role:'user',content:`Suggest 5 logo ideas and image prompts for this brand in Hindi: ${d}`}], 'gpt-4o-mini', 400, 0.8, 'Logo Maker'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message} });
+      enhanceVoiceUI();
+    }
+
+    function loadProductivityTools(){
+      toolTitle.textContent = '📂 Productivity Tools';
+      toolArea.innerHTML = `
+        <div class="grid">
+          <div class="card"><h3>Resume Builder</h3><label>Details (Name, Education, Experience)</label><textarea id="resume-input" rows="6"></textarea><button id="build-resume" class="btn">Build Resume</button><div id="resume-res" class="result"></div></div>
+          <div class="card"><h3>Cover Letter</h3><textarea id="cover-input" rows="4"></textarea><button id="build-cover" class="btn">Generate Cover Letter</button><div id="cover-res" class="result"></div></div>
+          <div class="card"><h3>Meeting Notes Summarizer</h3><textarea id="meet-input" rows="4"></textarea><button id="summ-meet" class="btn">Summarize Meeting</button><div id="meet-res" class="result"></div></div>
+        </div>`;
+      document.getElementById('build-resume').addEventListener('click', async ()=>{ const d = document.getElementById('resume-input').value.trim(); if(!d){alert('job description');return} const out = document.getElementById('resume-res'); out.textContent='Building resume...'; try{ const r = await callOpenAIChat([{role:'user',content:`Create a clean resume in Hindi from these details:\n${d}`}], 'gpt-4o-mini', 600, 0.2, 'Resume Builder'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message} });
+      document.getElementById('build-cover').addEventListener('click', async ()=>{ const d = document.getElementById('cover-input').value.trim(); if(!d){alert('give job description');return} const out = document.getElementById('cover-res'); out.textContent='Generating...'; try{ const r = await callOpenAIChat([{role:'user',content:`Write a cover letter in Hindi for this job application:\n${d}`}], 'gpt-4o-mini', 400, 0.3, 'Cover Letter Generator'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message} });
+      document.getElementById('summ-meet').addEventListener('click', async ()=>{ const d = document.getElementById('meet-input').value.trim(); if(!d){alert('give transcript');return} const out = document.getElementById('meet-res'); out.textContent='Summarizing...'; try{ const r = await callOpenAIChat([{role:'user',content:`Summarize the following meeting notes into key points and action items in Hindi:\n${d}`}], 'gpt-4o-mini', 400, 0.2, 'Meeting Notes Summarizer'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message} });
+      enhanceVoiceUI();
+    }
+
+    function loadChatTools(){
+      toolTitle.textContent = '🤖 Chat & Voice';
+      toolArea.innerHTML = `
+        <div class="grid">
+          <div class="card">
+            <h3>Chatbot</h3>
+            <label>whatever you want to ask</label>
+            <textarea id="chat-input" rows="4"></textarea>
+            <div class="row" style="align-items:center;margin-top:8px">
+              <button id="ask-btn" class="btn">Ask</button>
+              <label style="margin-left:10px"><input id="auto-speak-local" type="checkbox" /> speak out the answer</label>
+            </div>
+            <div id="chat-res" class="result" style="margin-top:10px"></div>
+          </div>
+        </div>`;
+      document.getElementById('ask-btn').addEventListener('click', async ()=>{
+        const q = document.getElementById('chat-input').value.trim(); if(!q){alert('write question');return}
+        const out = document.getElementById('chat-res'); out.textContent='Thinking...';
+        try{ const r = await callOpenAIChat([{role:'user',content:q}], '4o-mini', 500, 0.7, 'Chatbot'); out.textContent = r; if(document.getElementById('auto-speak-local').checked) speak(r); }catch(e){out.textContent='Error: '+e.message}
+      });
+      enhanceVoiceUI();
+    }
+
+    function loadTranslateTools(){
+      toolTitle.textContent = '🌐 Translate';
+      toolArea.innerHTML = `
+        <div class="grid">
+          <div class="card">
+            <h3>Language Translator</h3>
+            <label>text</label>
+            <textarea id="trans-input" rows="4"></textarea>
+            <div class="row" style="margin-top:8px;align-items:center">
+              <label style="margin:0">To</label>
+              <input id="trans-lang" type="text" value="Hindi" style="width:140px" />
+              <button id="translate-btn" class="btn">Translate</button>
+            </div>
+            <div id="trans-res" class="result"></div>
+          </div>
+        </div>`;
+      document.getElementById('translate-btn').addEventListener('click', async ()=>{
+        const txt = document.getElementById('trans-input').value.trim();
+        const lang = document.getElementById('trans-lang').value.trim();
+        if(!txt || !lang){alert('Fill in both fields');return}
+        const out = document.getElementById('trans-res'); out.textContent='Translating...';
+        try{ const r = await callOpenAIChat([{role:'user',content:`Translate this to ${lang}: "${txt}"`}], '4o-mini', 300, 0.2, 'Translator'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message}
+      });
+      enhanceVoiceUI();
+    }
+
+    function loadQuizTools(){
+      toolTitle.textContent = '🧮 Math Quiz';
+      toolArea.innerHTML = `
+        <div class="grid">
+          <div class="card">
+            <h3>Math Quiz</h3>
+            <p>Make up a question and answer it.</p>
+            <div class="row" style="gap:10px">
+              <button id="gen-quiz" class="btn">Generate New Question</button>
+              <button id="check-ans" class="btn" style="background:#0ea5a4">Check Answer</button>
+            </div>
+            <div id="quiz-q" style="font-size:18px;margin-top:14px;min-height:30px"></div>
+            <input id="quiz-ans" type="text" placeholder="Your answer" style="margin-top:10px" />
+            <div id="quiz-res" class="result" style="margin-top:10px"></div>
+          </div>
+        </div>`;
+      document.getElementById('gen-quiz').addEventListener('click', async ()=>{
+        const outQ = document.getElementById('quiz-q'); const outR = document.getElementById('quiz-res');
+        outQ.textContent='Generating...'; outR.textContent='';
+        try { const r = await callOpenAIChat([{role:'user',content:'Generate a math quiz question. Do not provide the answer.'}], '4o-mini', 50, 0.9, 'Math Quiz'); outQ.textContent = r; window._lastQuizQ = r; } catch(e) { outQ.textContent='Error: '+e.message }
+      });
+      document.getElementById('check-ans').addEventListener('click', async ()=>{
+        if(!window._lastQuizQ){alert('make questions first');return}
+        const ans = document.getElementById('quiz-ans').value.trim(); if(!ans){alert('write the answers');return}
+        const out = document.getElementById('quiz-res'); out.textContent='Checking...';
+        try{ const r = await callOpenAIChat([{role:'user',content:`Check if the answer "${ans}" is correct for the question: "${window._lastQuizQ}". Give a brief explanation in Hindi.`}], 'gpt-4o-mini', 200, 0.2, 'Math Quiz Answer Check'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message}
+      });
+      enhanceVoiceUI();
+    }
+
+    function loadFunTools(){
+      toolTitle.textContent = '🎉 Fun';
+      toolArea.innerHTML = `
+        <div class="grid">
+          <div class="card">
+            <h3>Story Generator</h3>
+            <label>Story Beginning/Theme</label>
+            <textarea id="story-prompt" rows="4"></textarea>
+            <button id="gen-story" class="btn">Write Story</button>
+            <div id="story-res" class="result"></div>
+          </div>
+          <div class="card">
+            <h3>Joke Teller</h3>
+            <label>Joke on what topic?</label>
+            <input id="joke-topic" type="text" />
+            <button id="tell-joke" class="btn">Tell a Joke</button>
+            <div id="joke-res" class="result"></div>
+          </div>
+        </div>`;
+      document.getElementById('gen-story').addEventListener('click', async ()=>{
+        const p = document.getElementById('story-prompt').value.trim(); if(!p){alert('give prompt');return}
+        const out = document.getElementById('story-res'); out.textContent='Writing...';
+        try{ const r = await callOpenAIChat([{role:'user',content:`Write a short story in Hindi based on this: ${p}`}], 'gpt-4o-mini', 600, 0.8, 'Story Generator'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message}
+      });
+      document.getElementById('tell-joke').addEventListener('click', async ()=>{
+        const t = document.getElementById('joke-topic').value.trim() || 'something fun';
+        const out = document.getElementById('joke-res'); out.textContent='I am thinking...';
+        try{ const r = await callOpenAIChat([{role:'user',content:`Tell a joke about ${t} in Hindi.`}], '4o-mini', 200, 1.0, 'Joke Teller'); out.textContent = r; }catch(e){out.textContent='Error: '+e.message}
+      });
+      enhanceVoiceUI();
+    }
+
+    function loadHistoryTools(){
+      toolTitle.textContent = '📜 History';
+      const history = JSON.parse(localStorage.getItem('aiHistory') || '[]');
+      let historyHTML = '';
+      if (history.length === 0) {
+        historyHTML = '<p class="muted" style="text-align:center">No history. Try other tools first.</p>';
+      } else {
+        history.forEach(item => {
+          historyHTML += `
+            <div class="card" style="margin-bottom:12px">
+              <div style="font-size:14px;font-weight:600;display:flex;justify-content:space-between">
+                <span>${item.tool}</span>
+                <span style="font-size:12px;color:var(--muted)">${item.timestamp}</span>
+              </div>
+              <label style="margin-top:10px">Your prompt:</label>
+              <div class="result" style="font-size:14px">${item.prompt}</div>
+              <label style="margin-top:10px">AI output:</label>
+              <div class="result" style="font-size:14px">${item.output}</div>
+              <div class="voice-wrap"><button class="icon-btn" onclick='speak(${JSON.stringify(''+(item.output||'')).replace(/"/g,"&quot;")})'>🔊 recite</button></div>
+            </div>`;
+        });
+      }
+      toolArea.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button id="clear-history" class="btn" style="background:#dc2626">Clear History</button></div>${historyHTML}`;
+      document.getElementById('clear-history').addEventListener('click', ()=>{ if(confirm('Do you really want to delete all history?')){ localStorage.removeItem('aiHistory'); loadHistoryTools(); }});
+      enhanceVoiceUI();
+    }
+
+    // Backgrounds (simple presets)
+    const presetBGs = [
+      {tag:'City', url:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop'},
+      {tag:'Galaxy', url:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?q=80&w=1200&auto=format&fit=crop'},
+      {tag:'Mountains', url:'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop'},
+      {tag:'Forest', url:'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop&sat=-50'},
+      {tag:'Tech', url:'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop'},
+      {tag:'Waves', url:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop'}
+    ];
+
+    function renderBGChooser(list){
+      const chooser = document.getElementById('bg-chooser');
+      if(!chooser) return;
+      chooser.innerHTML = list.map((it,idx)=>`<div class="thumb" data-idx="${idx}"><img src="${it.url}" alt="bg"><div class="tag">${it.tag}</div></div>`).join('');
+      chooser.querySelectorAll('.thumb').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          chooser.querySelectorAll('.thumb').forEach(t=>t.classList.remove('active'));
+          el.classList.add('active');
+          const i = parseInt(el.dataset.idx,10);
+          document.documentElement.style.setProperty('--bg-img', `url('${list[i].url}')`);
+        });
+      });
+    }
+    renderBGChooser(presetBGs);
+
+    // Initial menu wiring (left nav)
+    document.querySelectorAll('.menu button').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.menu button').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        loadTool(btn.dataset.tool);
+        // close mobile sidebar automatically
+        if(window.innerWidth <= 980) closeSidebar();
+      });
+    });
+
+    document.getElementById('open-login').addEventListener('click', ()=> document.getElementById('login-overlay').style.display='flex');
+    document.getElementById('close-login').addEventListener('click', ()=> document.getElementById('login-overlay').style.display='none');
+
+    document.getElementById('download-zip').addEventListener('click', ()=>{
+      const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'all-in-one-ai-voice.html'; a.click(); URL.revokeObjectURL(a.href);
+    });
+
+    // Initial load
+    loadTool('text');
+    initTTSVoices();
+
+    // Re-init voices on focus (helpful on some mobile browsers)
+    window.addEventListener('focus', ()=> initTTSVoices());
+
+  </script>
+</body>
+</html>
