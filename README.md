@@ -1,2 +1,2 @@
-# ai
-my ai
+# AI
+my AI
